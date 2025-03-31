@@ -1,0 +1,25 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/kittinook/Documents/GitHub/CyberGearMotor/install/cybergear_interfaces/include/**",
+        "/home/kittinook/fra532_lecture5_ws/install/mir_msgs/include/**",
+        "/home/kittinook/fra532_lecture5_ws/install/ira_laser_tools/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/kittinook/Documents/GitHub/CyberGearMotor/src/cybergear_drive/include/**",
+        "/home/kittinook/Documents/GitHub/CyberGearMotor/src/cybergear_interfaces/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

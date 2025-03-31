@@ -1,0 +1,43 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/kittinook/Documents/GitHub/CyberGearMotor/install/cybergear_interfaces/local/lib/python3.10/dist-packages",
+        "/home/kittinook/Documents/GitHub/CyberGearMotor/install/cybergear_drive/local/lib/python3.10/dist-packages",
+        "/usr/local/lib/python3.12/site-packages",
+        "/home/kittinook/otto_ws/install/otto_simulation/local/lib/python3.10/dist-packages",
+        "/home/kittinook/otto_ws/install/otto_controller/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/mir_driver/lib/python3.10/site-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/twist_stamper/lib/python3.10/site-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/mir_restapi/lib/python3.10/site-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/mir_msgs/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fraa532_slam/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fraa532_nav/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fraa532_gazebo/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fra532_slam/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fra532_nav/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fra532_gazebo/local/lib/python3.10/dist-packages",
+        "/usr/local/lib/python3.12/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/kittinook/Documents/GitHub/CyberGearMotor/install/cybergear_interfaces/local/lib/python3.10/dist-packages",
+        "/home/kittinook/Documents/GitHub/CyberGearMotor/install/cybergear_drive/local/lib/python3.10/dist-packages",
+        "/usr/local/lib/python3.12/site-packages",
+        "/home/kittinook/otto_ws/install/otto_simulation/local/lib/python3.10/dist-packages",
+        "/home/kittinook/otto_ws/install/otto_controller/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/mir_driver/lib/python3.10/site-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/twist_stamper/lib/python3.10/site-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/mir_restapi/lib/python3.10/site-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/mir_msgs/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fraa532_slam/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fraa532_nav/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fraa532_gazebo/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fra532_slam/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fra532_nav/local/lib/python3.10/dist-packages",
+        "/home/kittinook/fra532_lecture5_ws/install/fra532_gazebo/local/lib/python3.10/dist-packages",
+        "/usr/local/lib/python3.12/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "ros.distro": "humble"
+}
