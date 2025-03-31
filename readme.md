@@ -20,6 +20,10 @@ Outer diameter: Φ80.5mm
 Height: 36.5mm
 Torque constant: 0.87N.m/A
 
+## Dependency
+``` bash
+git clone https://github.com/kittinook/cybergear_interfaces
+```
 ## Command
 ``` bash
 ros2 run cybergear_driver cybergear_driver.py 
