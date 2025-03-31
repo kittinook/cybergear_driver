@@ -22,31 +22,20 @@ class CyberGearROS2Node(Node):
     def __init__(self):
         super().__init__('cybergear_node')
         
-        # โหลด configuration จากไฟล์ YAML ผ่าน parameter (default "config.yaml")
         config_file = self.declare_parameter('config_file', 'config.yaml').value
         config = load_config(config_file)
         print("Load Current Config")
         print(config)
-        # สร้าง controller สำหรับควบคุมมอเตอร์
+        
         self.controller = CyberGearController(config, echo=False)
         self.get_logger().info("CyberGearController initialized")
         
-        # ตั้งค่ามอเตอร์ตาม configuration
         self.controller.setup_motors()
         
-        # อ่าน mode ควบคุมจาก parameter (default "velocity")
         self.mode = self.declare_parameter('control_mode', 'velocity').value
         
-        # สร้าง publisher สำหรับส่งออก Joint State
         self.joint_state_pub = self.create_publisher(JointState, 'joint_states', 10)
         
-        # สร้าง subscriber สำหรับรับคำสั่งควบคุมแบบ group command
-        # self.command_sub = self.create_subscription(
-        #     Float64MultiArray,
-        #     'group_command',
-        #     self.command_callback,
-        #     10
-        # )
         self.command_sub = self.create_subscription(
             MotorControlGroup,
             'motor_group_command',
@@ -54,13 +43,10 @@ class CyberGearROS2Node(Node):
             10
         )
         
-        # สร้าง timer callback เพื่อทำงานวนลูปส่งคำสั่งและดึงข้อมูล joint state
         self.timer = self.create_timer(0.01, self.timer_callback)  # 10 Hz
         
-        # ตัวแปรเก็บ group command ล่าสุด (dictionary motor_id: target_value)
         self.group_command = None
         
-        # เก็บรายชื่อมอเตอร์จาก configuration
         self.motors = config.get("motors", [])
 
         self.is_calibrate = False
@@ -89,11 +75,10 @@ class CyberGearROS2Node(Node):
           - ถ้ามี group command ส่งคำสั่งให้มอเตอร์ผ่าน controller
           - ดึงข้อมูล joint state จากมอเตอร์ทุกตัวและ publish ออกไป
         """
-        # if self.is_calibrate:
+        
         if self.group_command is not None:
             self.controller.send_group_command(self.group_command)
         
-        # ดึง joint state จากมอเตอร์
         joint_states = self.controller.get_joint_states()
         js_msg = JointState()
         js_msg.header.stamp = self.get_clock().now().to_msg()
@@ -101,7 +86,7 @@ class CyberGearROS2Node(Node):
         names = []
         positions = []
         velocities = []
-        efforts = []  # สามารถ mapping current ให้กับ effort ได้
+        efforts = []  
         
         for motor in self.motors:
             motor_id = motor.get("id")
@@ -125,7 +110,6 @@ class CyberGearROS2Node(Node):
         self.get_logger().info("Published joint states")
     
     def destroy_node(self):
-        # Shutdown controller ก่อนปิด node
         self.controller.shutdown()
         super().destroy_node()
 

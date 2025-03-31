@@ -4,7 +4,6 @@ import math
 from cybergear import CyberGear, uint_to_float
 from struct import pack, unpack, iter_unpack
 
-# ฟังก์ชันช่วยดึง feedback (Joint State)
 def get_feedback(cg, motor_id, echo=False):
     """
     ดึง feedback จากมอเตอร์ผ่านคำสั่ง type2
@@ -23,7 +22,6 @@ def get_feedback(cg, motor_id, echo=False):
         return alarm_code, position, velocity, current
     return None
 
-# ฟังก์ชันช่วยส่งคำสั่งควบคุมมอเตอร์
 def command_motor(cg, motor_id, target_value, echo=False):
     """
     สั่งงานมอเตอร์โดยเลือกโหมดที่ต้องการ:
@@ -67,49 +65,39 @@ class CyberGearController:
     def __init__(self, config: dict, echo=False):
         self.config = config
         self.echo = echo
-        # ตั้งค่า CAN bus จาก config
+        
         can_config = config.get("can", {})
         self.bus = can.Bus(interface=can_config.get("interface", "canalystii"),
                            channel=can_config.get("channel", 0),
                            bitrate=can_config.get("bitrate", 1000000))
         self.cg = CyberGear(self.bus)
-        # รายการมอเตอร์
+        
         self.motors = config.get("motors", [])
-        # ค่าการควบคุม
+        
         self.control_config = config.get("control", {})
 
     def setup_motors(self):
-        """
-        ตั้งค่าเริ่มต้นให้กับมอเตอร์แต่ละตัว (เช่น run_mode, limit_spd, limit_cur)
-        """
         for motor in self.motors:
             motor_id = motor.get("id")
             control_mode = motor.get("control_mode", 2)
             limit_spd = motor.get("limit_spd", 5.0)
             limit_cur = motor.get("limit_cur", 2.0)
-            # หยุดมอเตอร์ก่อนตั้งค่า
+            
             self.cg.type4(motor_id, fault=False, echo=self.echo)
-            # ตั้งค่า run mode และ limit
+            
             self.cg.set_item_value(motor_id, "run_mode", control_mode, echo=self.echo)
             self.cg.set_item_value(motor_id, "limit_spd", limit_spd, echo=self.echo)
             self.cg.set_item_value(motor_id, "limit_cur", limit_cur, echo=self.echo)
-            # สั่งเริ่มมอเตอร์
+            
             self.cg.type3(motor_id, echo=self.echo)
             print(f"Motor {motor_id} setup completed, mode: {control_mode}.")
 
     def command_all(self, mode: str, target_value: float):
-        """
-        สั่งงานมอเตอร์ทุกตัวด้วย mode และ target_value เดียวกัน
-        """
         for motor in self.motors:
             motor_id = motor.get("id")
             command_motor(self.cg, motor_id, mode, target_value, echo=self.echo)
 
     def get_joint_states(self):
-        """
-        ดึงค่า Joint State จากมอเตอร์ทุกตัว
-        คืนค่าเป็น dictionary ที่ key คือ motor id และ value เป็น dict ของ position, velocity, current
-        """
         joint_states = {}
         for motor in self.motors:
             motor_id = motor.get("id")
@@ -126,11 +114,6 @@ class CyberGearController:
         return joint_states
     
     def create_item_command_frame(self, motor_id, field_name, target_value, echo=False):
-        """
-        สร้าง CAN frame สำหรับส่งค่าของ field ที่ระบุ (เช่น 'spd_ref') ตามโครงสร้างของ type18
-        ใช้ format: <Hxxf  (2 bytes สำหรับ code, 2 bytes padding, 4 bytes float)
-        """
-        # หา field ที่ตรงกับ field_name ใน _fields_ ของ CyberGear
         field = next((f for f in self.cg._fields_ if f["name"] == field_name), None)
         if field is None:
             if echo:
@@ -138,13 +121,13 @@ class CyberGearController:
             return None
         code = field["code"]
         fmt = field["format"]
-        # ตรวจสอบว่าฟอร์แมตเป็น float
+        
         if fmt != 'f':
             if echo:
                 print("Field format not supported in batch command.")
             return None
 
-        # สร้าง data โดยใช้ struct.pack แบบ little-endian (<) ตามที่ type18 ใช้
+
         try:
             data = pack("<Hxxf", code, target_value)
         except Exception as e:
@@ -152,8 +135,6 @@ class CyberGearController:
                 print(f"Packing error for motor {motor_id}: {e}")
             return None
 
-        # สร้าง arbitration_id สำหรับคำสั่ง type18:
-        # ใช้ cmd = 18, id_opt = 0, motor_id อยู่ใน 8 บิต
         arbitration_id = (motor_id & 0xff) | (0 << 8) | ((18 & 0x1f) << 24)
         frame = can.Message(arbitration_id=arbitration_id,
                             data=data,
@@ -163,16 +144,6 @@ class CyberGearController:
         return frame
 
     def create_can_frame(self, motor_id, mode, target_value, master_id=0xFD):
-        """
-        สร้าง CAN Frame ให้ตรงกับ CyberGear:
-        - motor_id: int (0-127)
-        - mode: str เช่น 'position', 'velocity', 'torque'
-        - target_value: float ค่าควบคุมที่ต้องการส่ง
-        - master_id: int, default=0xFD (ตัวอย่างเช่น ID ของผู้ส่งคำสั่ง)
-
-        Return:
-            can.Message (python-can library)
-        """
         def float_to_uint(x: float, x_min: float, x_max: float):
             if x > x_max:
                 x = x_max
@@ -180,26 +151,22 @@ class CyberGearController:
                 x = x_min
             return int((x - x_min) * 65535 / (x_max - x_min))
         
-        # โหมดคำสั่งของ CyberGear (อิงจากตัวอย่างที่ให้มา)
+        
         mode_dict = {'position': 1, 'velocity': 2, 'torque': 3}
 
-        cmd = mode_dict.get(mode, 0)  # default 0 หาก mode ไม่ถูกต้อง
+        cmd = mode_dict.get(mode, 0) 
 
-        # CyberGear ใช้ข้อมูลเป็น uint16 ในการส่ง position/velocity และอื่นๆ
-        # สมมุติว่าเราต้องการส่งค่ามุมเป็น float และต้องแปลงเป็น integer ก่อนส่ง (0-65535)
-        # ควรปรับขอบเขตตามจริงที่ CyberGear ต้องการ
         if mode == 'position':
             target_int = float_to_uint(target_value, -math.pi, math.pi)
         elif mode == 'velocity':
-            target_int = float_to_uint(target_value, -20, 20)  # ตัวอย่างขอบเขต velocity rad/s
+            target_int = float_to_uint(target_value, -20, 20) 
         elif mode == 'torque':
-            target_int = float_to_uint(target_value, -5, 5)    # ตัวอย่างขอบเขต torque Nm
+            target_int = float_to_uint(target_value, -5, 5)   
         else:
             target_int = 0
 
-        data = pack('>Hxxxxxx', target_int)  # รูปแบบ data CyberGear (big-endian + padding)
+        data = pack('>Hxxxxxx', target_int) 
 
-        # arbitration_id CyberGear (cmd 5bit <<24 | master_id 16bit <<8 | motor_id 8bit)
         arbitration_id = ((cmd & 0x1F) << 24) | ((master_id & 0xFFFF) << 8) | (motor_id & 0xFF)
 
         frame = can.Message(arbitration_id=arbitration_id,
@@ -209,14 +176,6 @@ class CyberGearController:
         return frame
                             
     def send_group_command1(self, commands: dict, mode: str):
-        """
-        ส่งคำสั่งเป็นกลุ่มแบบ batch
-        สำหรับแต่ละ motor ให้ใช้ field name ตาม mode:
-        - "position" -> "loc_ref"
-        - "velocity" -> "spd_ref"
-        - "current"  -> "iq_ref"
-        """
-        # กำหนด mapping ระหว่าง mode กับ field name
         field_map = {
             "position": "loc_ref",
             "velocity": "spd_ref",
@@ -236,14 +195,10 @@ class CyberGearController:
             frame = self.create_item_command_frame(motor_id, field_name, target_value, echo=self.echo)
             if frame is not None:
                 frames.append(frame)
-        # ส่งทั้งหมดในครั้งเดียวผ่าน CAN Bus interface
         self.cg.send_batch(frames)
 
 
     def send_group_command(self, commands: dict):
-        """
-        ส่งคำสั่งเป็นกลุ่ม (group command) โดย commands เป็น dict ที่ key คือ motor id และ value คือ target value
-        """
         for motor_id, target_value in commands.items():
             command_motor(self.cg, motor_id, target_value, echo=self.echo)
 
