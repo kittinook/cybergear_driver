@@ -1,3 +1,6 @@
+params:
+  timer_period_hz: 200   # hz
+
 can:
   interface: "canalystii"
   channel: 0
@@ -5,38 +8,41 @@ can:
 
 motors:
   - id: 1
+    joint_name: "joint1"
     limit_spd: 5.0
     limit_cur: 2.0
+    offset_pos_1: -1.304  # initial position
+    offset_pos_2: 0.0     # destination position
+    direction: -1          # [-1, 1] inverse direction
     control_mode: 0 
     speed:
       kp: 0.1
       ki: 0.05
-      max_current: 12.0
-      min_current: -12.0
-  # - id: 2
-  #   limit_spd: 6.0
-  #   limit_cur: 2.5
-  #   control_mode: 0     # Motor 2 ใช้ Current mode
-  #   speed:
-  #     kp: 0.1
-  #     ki: 0.05
-  #     max_current: 12.0
-  #     min_current: -12.0
-  # - id: 3
-  #   limit_spd: 6.0
-  #   limit_cur: 2.5
-  #   control_mode: 0       # Motor 3 ใช้ Speed mode
-  #   speed:
-  #     kp: 0.25
-  #     ki: 0.12
-  #     max_speed: 32.0
-  #     min_speed: -32.0
-  # - id: 4
-  #   limit_spd: 6.0
-  #   limit_cur: 2.5
-  #   control_mode: "position"    # Motor 4 ใช้ Position mode
-  #   position:
-  #     kp: 1.0
-  #     kd: 0.2
-  #     max_position: 12.56
-  #     min_position: -12.56
+      max_current: 4.0
+      min_current: -4.0
+  - id: 2
+    joint_name: "joint2"
+    limit_spd: 6.0
+    limit_cur: 2.5
+    offset_pos_1: -0.628  # initial position
+    offset_pos_2: 0.0244  # destination position
+    direction: -1          # [-1, 1] inverse direction
+    control_mode: 0 
+    speed:
+      kp: 0.1
+      ki: 0.05
+      max_current: 4.0
+      min_current: -4.0
+  - id: 3
+    joint_name: "joint3"
+    limit_spd: 6.0
+    limit_cur: 2.5
+    offset_pos_1: -0.657  # initial position
+    offset_pos_2: 0.9577  # destination position
+    direction: 1          # [-1, 1] inverse direction
+    control_mode: 0
+    speed:
+      kp: 0.25
+      ki: 0.12
+      max_speed: 4.0
+      min_speed: -4.0
