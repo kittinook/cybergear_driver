@@ -8,13 +8,14 @@
 # 6 motor -> 185 hz -> 117 hz
 
 # Log
-# 1/04/2025 Add offset function
+# 1/04/2025 Add calibration function
+# 1/05/2025 Add direction parameter
 
 
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-from std_srvs.srv import Trigger  # Trigger service -> calibrate
+from std_srvs.srv import Trigger 
 
 from config import load_config
 from controller import CyberGearController
@@ -46,20 +47,31 @@ class CyberGearROS2Node(Node):
         
         self.calibration_srv = self.create_service(Trigger, 'calibrate', self.handle_calibration)
         
-        self.timer = self.create_timer(0.01, self.timer_callback)  # 10 Hz
+        dt = config.get("params")['timer_period_hz']
+        
+        self.timer = self.create_timer(1/dt, self.timer_callback)  # 10 Hz
+        
         
         self.group_command = None
+        self.dir = []
+        self.joint_name = []
         
         self.motors = config.get("motors", [])
-        
+        for i, motor in enumerate(self.motors):
+            if motor.get("direction") == -1:
+                self.dir.append(-1)
+            else:
+                self.dir.append(1)
+            if motor.get("joint_name") != None:
+                self.joint_name.append(motor.get("joint_name"))
+            else:
+                self.joint_name.append("motor_" + str(i))
+        # ตัวแปรสำหรับการ calibrate
         self.is_calibrated = False
         self.offsets = {}   # { motor_id: offset_value }
         self.gear_ratio = 7  # gearbox ratio
 
     def command_callback(self, msg: MotorControlGroup):
-        """
-        recive group command from topic 'motor_group_command'
-        """
         if len(msg.motor_controls) != len(self.motors):
             self.get_logger().warn("Received group command length does not match number of motors")
             return
@@ -67,7 +79,8 @@ class CyberGearROS2Node(Node):
         command_dict = {}
         for i, motor in enumerate(self.motors):
             if self.is_calibrated:
-                msg.motor_controls[i].set_point.position = msg.motor_controls[i].set_point.position - motor.get("offset_pos_1") + motor.get("offset_pos_2")
+                # msg.motor_controls[i].set_point.position = (float(self.dir[i])*msg.motor_controls[i].set_point.position) + float(motor.get("offset_pos_1")) + float(motor.get("offset_pos_2"))
+                msg.motor_controls[i].set_point.position = (float(self.dir[i])*msg.motor_controls[i].set_point.position) + float(motor.get("offset_pos_2")) + float(motor.get("offset_pos_1"))
             else:
                 pass
             motor_id = motor.get("id")
@@ -77,9 +90,6 @@ class CyberGearROS2Node(Node):
         self.get_logger().info(f"Received group command: {self.group_command}")
 
     def handle_calibration(self, request, response):
-        """
-        Service callback for calibrate
-        """
         joint_states = self.controller.get_joint_states()
         for motor in self.motors:
             motor_id = motor.get("id")
@@ -96,13 +106,6 @@ class CyberGearROS2Node(Node):
         return response
 
     def timer_callback(self):
-        """
-        Timer callback:
-          - send command to motor
-          - revice joint state
-          - adjust the pose
-          - Publish joint state
-        """
         if self.group_command is not None:
             self.controller.send_group_command(self.group_command)
         
@@ -114,15 +117,16 @@ class CyberGearROS2Node(Node):
         positions = []
         velocities = []
         efforts = [] 
-        
+        i = 0
         for motor in self.motors:
             motor_id = motor.get("id")
-            names.append(f"motor_{motor_id}")
+            # names.append(f"motor_{motor_id}")
+            names.append(self.joint_name[i])
             state = joint_states.get(motor_id)
             if state:
                 raw_position = state.get("position", 0.0)
                 if self.is_calibrated:
-                    calibrated_position = ((raw_position + motor.get("offset_pos_1"))) - motor.get("offset_pos_2")
+                    calibrated_position = (self.dir[i] * ((raw_position - motor.get("offset_pos_1")))) - motor.get("offset_pos_2")
                 else:
                     calibrated_position = raw_position
 
@@ -133,6 +137,8 @@ class CyberGearROS2Node(Node):
                 positions.append(0.0)
                 velocities.append(0.0)
                 efforts.append(0.0)
+            
+            i += 1
         
         js_msg.name = names
         js_msg.position = positions
@@ -140,8 +146,10 @@ class CyberGearROS2Node(Node):
         js_msg.effort = efforts
         
         self.joint_state_pub.publish(js_msg)
+        # self.get_logger().info("Published joint states")
     
     def destroy_node(self):
+        # Shutdown controller ก่อนปิด node
         self.controller.shutdown()
         super().destroy_node()
 
